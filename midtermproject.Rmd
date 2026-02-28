@@ -1,0 +1,69 @@
+` ---
+title: "Midterm project"
+output:
+  pdf_document: default
+  html_document: default
+date: "2025-10-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+```
+```{r}
+stock <- read_csv("World-Stock-Prices-Dataset.csv")
+head(stock)
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+#install.packages("lubridate")
+library(lubridate)
+stock$Month <- format(stock$Date, "%Y-%m")
+```
+Wrangling process 
+
+```{r}
+stock_prices <- subset(stock, Month > 2016-01)
+head(stock_prices)
+monthly_price <- stock_prices %>% 
+  group_by(Brand_Name, Month, Industry_Tag) %>% 
+  summarize(monthly_price = mean(Close,na.rm =T))
+head(monthly_price)
+```
+First plot
+
+```{r, fig.width=8, fig.height=10}
+par(mar=c(10, 4, 4, 2) + 0.1)
+profit <- monthly_price %>% 
+  filter(Month %in% c("2015-01", "2025-07")) %>% 
+  group_by(Brand_Name, Industry_Tag) %>% 
+  summarize(Start_Price = round(monthly_price[Month == "2015-01"], 2),
+    End_Price = round(monthly_price[Month == "2025-07"], 2),
+    Profit_Rate = round(((End_Price / Start_Price) - 1) * 100, 2))
+head(profit)
+ggplot(data = profit, aes(x = Brand_Name, y = Profit_Rate)) + 
+  geom_point(col = "darkblue", size = 2) + coord_flip() + labs(
+    title = "Profit Rate of Each Company", x = "Company Name", y = "Profit Rate")
+```
+Second plot
+
+```{r}
+average_return <- profit %>% group_by(Industry_Tag) %>% 
+  summarise(average_return=mean(Profit_Rate, na.rm=T)) 
+head(average_return)
+par(mar=c(7, 4, 4, 2) + 0.1)
+barplot(average_return$average_return, names.arg = average_return$Industry_Tag, 
+    xlab = "", ylab = "Profit rate", main = "Average return by each industry",las = 2)
+```
